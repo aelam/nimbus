@@ -97,8 +97,11 @@
   // Only NICellObject-conformant objects may pass.
   if ([object respondsToSelector:@selector(cellNib)]) {
     UINib* nib = [object cellNib];
-    cell = [self cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
-  } else if ([object respondsToSelector:@selector(cellClass)]) {
+    if (nib) {
+      cell = [self cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
+    }
+  }
+  if (!cell && [object respondsToSelector:@selector(cellClass)]) {
     Class cellClass = [object cellClass];
     cell = [self cellWithClass:cellClass tableView:tableView object:object];
   }
@@ -138,10 +141,14 @@
   UITableViewCell* cell = nil;
 
   Class cellClass = [self cellClassFromObject:object];
+  
   if ([object respondsToSelector:@selector(cellNib)]) {
     UINib* nib = [object cellNib];
-    cell = [[self class] cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
-  } else if (nil != cellClass) {
+    if (nib) {
+      cell = [[self class] cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
+    }
+  }
+  if (!cell && nil != cellClass) {
     cell = [[self class] cellWithClass:cellClass tableView:tableView object:object];
   }
 
