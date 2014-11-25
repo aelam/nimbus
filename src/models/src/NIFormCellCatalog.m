@@ -204,7 +204,7 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
 - (void)prepareForReuse {
   [super prepareForReuse];
-  
+
   _element = nil;
 }
 
@@ -344,15 +344,22 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
   if (nil != switchElement.didChangeSelector && nil != switchElement.didChangeTarget
       && [switchElement.didChangeTarget respondsToSelector:switchElement.didChangeSelector]) {
-    
+
     // This throws a warning a seclectors that the compiler do not know about cannot be
     // memory managed by ARC
     //[switchElement.didChangeTarget performSelector: switchElement.didChangeSelector
     //                                    withObject: _switchControl];
-    
+
     // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(switchElement.didChangeTarget, 
-                 switchElement.didChangeSelector, _switchControl);
+    //objc_msgSend(switchElement.didChangeTarget,
+    //            switchElement.didChangeSelector, _switchControl);
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+    [switchElement.didChangeTarget performSelector:switchElement.didChangeSelector
+                                        withObject:_switchControl];
+#pragma clang diagnostic pop
+
   }
 }
 
@@ -428,7 +435,7 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
     //                                    withObject:_sliderControl];
 
     // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(sliderElement.didChangeTarget, 
+    objc_msgSend(sliderElement.didChangeTarget,
                  sliderElement.didChangeSelector, _sliderControl);
   }
 }
@@ -516,7 +523,7 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
     //                                               withObject:_segmentedControl];
 
     // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(segmentedControlElement.didChangeTarget, 
+    objc_msgSend(segmentedControlElement.didChangeTarget,
                  segmentedControlElement.didChangeSelector, _segmentedControl);
   }
 }
@@ -536,10 +543,10 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
   if ((self = [super initWithStyle:style reuseIdentifier:reuseIdentifier])) {
     self.selectionStyle = UITableViewCellSelectionStyleNone;
-    
+
     _datePicker = [[UIDatePicker alloc] init];
-    [_datePicker addTarget:self 
-                    action:@selector(selectedDateDidChange) 
+    [_datePicker addTarget:self
+                    action:@selector(selectedDateDidChange)
           forControlEvents:UIControlEventValueChanged];
 
     _dateField = [[UITextField alloc] init];
@@ -566,17 +573,17 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
 - (void)layoutSubviews {
   [super layoutSubviews];
-  
+
   UIEdgeInsets contentPadding = NICellContentPadding();
   CGRect contentFrame = UIEdgeInsetsInsetRect(self.contentView.frame, contentPadding);
-  
+
   [_dateField sizeToFit];
   CGRect frame = _dateField.frame;
   frame.origin.y = NICGFloatFloor((self.contentView.frame.size.height - frame.size.height) / 2);
   frame.origin.x = self.contentView.frame.size.width - frame.size.width - kDatePickerTextFieldRightMargin;
   _dateField.frame = frame;
   self.dumbDateField.frame = _dateField.frame;
-  
+
   frame = self.textLabel.frame;
   CGFloat leftEdge = 0;
   // Take into account the size of the image view.
@@ -593,7 +600,7 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
 - (void)prepareForReuse {
   [super prepareForReuse];
-  
+
   self.textLabel.text = nil;
   _dateField.text = nil;
 }
@@ -603,50 +610,50 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
     self.textLabel.text = datePickerElement.labelText;
     self.datePicker.datePickerMode = datePickerElement.datePickerMode;
     self.datePicker.date = datePickerElement.date;
-    
+
     switch (self.datePicker.datePickerMode) {
       case UIDatePickerModeDate:
-        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date 
-                                                             dateStyle:NSDateFormatterShortStyle 
+        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date
+                                                             dateStyle:NSDateFormatterShortStyle
                                                              timeStyle:NSDateFormatterNoStyle];
         break;
-        
+
       case UIDatePickerModeTime:
-        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date 
-                                                             dateStyle:NSDateFormatterNoStyle 
+        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date
+                                                             dateStyle:NSDateFormatterNoStyle
                                                              timeStyle:NSDateFormatterShortStyle];
         break;
-        
+
       case UIDatePickerModeCountDownTimer:
         if (self.datePicker.countDownDuration == 0) {
           self.dateField.text = NSLocalizedString(@"0 minutes", @"0 minutes");
         } else {
           int hours = (int)(self.datePicker.countDownDuration / 3600);
           int minutes = (int)((self.datePicker.countDownDuration - hours * 3600) / 60);
-          
+
           self.dateField.text = [NSString stringWithFormat:
-                                 NSLocalizedString(@"%d hours, %d min", 
-                                                   @"datepicker countdown hours and minutes"), 
-                                 hours, 
+                                 NSLocalizedString(@"%d hours, %d min",
+                                                   @"datepicker countdown hours and minutes"),
+                                 hours,
                                  minutes];
         }
         break;
-        
+
       case UIDatePickerModeDateAndTime:
       default:
-        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date 
-                                                             dateStyle:NSDateFormatterShortStyle 
+        self.dateField.text = [NSDateFormatter localizedStringFromDate:self.datePicker.date
+                                                             dateStyle:NSDateFormatterShortStyle
                                                              timeStyle:NSDateFormatterShortStyle];
         break;
     }
 
     self.dumbDateField.text = self.dateField.text;
-    
+
     _dateField.tag = self.tag;
-    
+
     _datePicker.date = datePickerElement.date;
     _datePicker.tag = self.tag;
-    
+
     [self setNeedsLayout];
     return YES;
   }
@@ -656,36 +663,36 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 - (void)selectedDateDidChange {
   switch (self.datePicker.datePickerMode) {
     case UIDatePickerModeDate:
-      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date 
-                                                           dateStyle:NSDateFormatterShortStyle 
+      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date
+                                                           dateStyle:NSDateFormatterShortStyle
                                                            timeStyle:NSDateFormatterNoStyle];
       break;
-      
+
     case UIDatePickerModeTime:
-      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date 
-                                                           dateStyle:NSDateFormatterNoStyle 
+      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date
+                                                           dateStyle:NSDateFormatterNoStyle
                                                            timeStyle:NSDateFormatterShortStyle];
       break;
-      
+
     case UIDatePickerModeCountDownTimer:
       if (self.datePicker.countDownDuration == 0) {
         self.dateField.text = NSLocalizedString(@"0 minutes", @"0 minutes");
       } else {
         int hours = (int)(self.datePicker.countDownDuration / 3600);
         int minutes = (int)((self.datePicker.countDownDuration - hours * 3600) / 60);
-        
+
         self.dateField.text = [NSString stringWithFormat:
-                               NSLocalizedString(@"%d hours, %d min", 
-                                                 @"datepicker countdown hours and minutes"), 
-                               hours, 
+                               NSLocalizedString(@"%d hours, %d min",
+                                                 @"datepicker countdown hours and minutes"),
+                               hours,
                                minutes];
       }
       break;
-      
+
     case UIDatePickerModeDateAndTime:
     default:
-      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date 
-                                                           dateStyle:NSDateFormatterShortStyle 
+      self.dateField.text = [NSDateFormatter localizedStringFromDate:_datePicker.date
+                                                           dateStyle:NSDateFormatterShortStyle
                                                            timeStyle:NSDateFormatterShortStyle];
       break;
   }
@@ -694,13 +701,13 @@ static const CGFloat kDatePickerTextFieldRightMargin = 5;
 
   NIDatePickerFormElement *datePickerElement = (NIDatePickerFormElement *)self.element;
   datePickerElement.date = _datePicker.date;
-  
+
   if (nil != datePickerElement.didChangeSelector && nil != datePickerElement.didChangeTarget
       && [datePickerElement.didChangeTarget respondsToSelector:datePickerElement.didChangeSelector]) {
     // [datePickerElement.didChangeTarget performSelector:datePickerElement.didChangeSelector withObject:self.datePicker];
 
     // The following is a workaround to supress the warning and requires <objc/message.h>
-    objc_msgSend(datePickerElement.didChangeTarget, 
+    objc_msgSend(datePickerElement.didChangeTarget,
                  datePickerElement.didChangeSelector, _datePicker);
 
   }
