@@ -141,13 +141,13 @@
   UITableViewCell* cell = nil;
 
   Class cellClass = [self cellClassFromObject:object];
-  
-  if ([object respondsToSelector:@selector(cellNib)]) {
-    UINib* nib = [object cellNib];
-    if (nib) {
-      cell = [[self class] cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
-    }
-  }
+  // TODO: Maybe need to add cellNibFromObject
+  // if ([object respondsToSelector:@selector(cellNib)]) {
+  //   UINib* nib = [object cellNib];
+  //   if (nib) {
+  //     cell = [[self class] cellWithNib:nib tableView:tableView indexPath:indexPath object:object];
+  //   }
+  // }
   if (!cell && nil != cellClass) {
     cell = [[self class] cellWithClass:cellClass tableView:tableView object:object];
   }

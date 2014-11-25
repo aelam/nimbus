@@ -91,7 +91,6 @@
   UICollectionViewCell* cell = nil;
 
   // Only NICollectionViewCellObject-conformant objects may pass.
-  
   if ([object respondsToSelector:@selector(collectionViewCellNib)]) {
     UINib* nib = [object collectionViewCellNib];
     if (nib) {
