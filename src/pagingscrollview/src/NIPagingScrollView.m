@@ -214,12 +214,12 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
   if (NIPagingScrollViewHorizontal == self.type) {
     // Whatever image is currently displayed in the center of the screen is the currently
     // visible image.
-    return NIBoundi((NSInteger)(floorf((contentOffset.x + boundsSize.width / 2) / boundsSize.width)
+    return NIBoundi((NSInteger)(NICGFloatFloor((contentOffset.x + boundsSize.width / 2) / boundsSize.width)
                               + 0.5f),
                   0, self.numberOfPages - 1);
 
   } else if (NIPagingScrollViewVertical == self.type) {
-    return NIBoundi((NSInteger)(floorf((contentOffset.y + boundsSize.height / 2) / boundsSize.height)
+    return NIBoundi((NSInteger)(NICGFloatFloor((contentOffset.y + boundsSize.height / 2) / boundsSize.height)
                               + 0.5f),
                   0, self.numberOfPages - 1);
   }
@@ -311,6 +311,16 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
   }
 }
 
+- (void)preloadOffscreenPages {
+  NSRange rangeOfVisiblePages = [self rangeOfVisiblePages];
+  for (NSUInteger pageIndex = rangeOfVisiblePages.location;
+       pageIndex < NSMaxRange(rangeOfVisiblePages); ++pageIndex) {
+    if (![self isDisplayingPageForIndex:pageIndex]) {
+      [self displayPageAtIndex:pageIndex];
+    }
+  }
+}
+
 - (void)updateVisiblePagesShouldNotifyDelegate:(BOOL)shouldNotifyDelegate {
   // Before updating _centerPageIndex, notify delegate
   if (shouldNotifyDelegate && (self.numberOfPages > 0) &&
@@ -345,13 +355,10 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
       [self displayPageAtIndex:_centerPageIndex];
     }
 
-    // Add missing pages.
-    for (int pageIndex = rangeOfVisiblePages.location;
-         pageIndex < (NSInteger)NSMaxRange(rangeOfVisiblePages); ++pageIndex) {
-      if (![self isDisplayingPageForIndex:pageIndex]) {
-        [self displayPageAtIndex:pageIndex];
-      }
-    }
+    // Add missing pages after displaying the current page.
+    [self performSelector:@selector(preloadOffscreenPages)
+               withObject:nil
+               afterDelay:0];
   } else {
     _centerPageIndex = -1;
   }
@@ -571,7 +578,7 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
   CGFloat pageScrollableDimension = [self pageScrollableDimension];
 
   if (offset >= 0) {
-    _firstVisiblePageIndexBeforeRotation = (NSInteger)floorf(offset / pageScrollableDimension);
+    _firstVisiblePageIndexBeforeRotation = (NSInteger)NICGFloatFloor(offset / pageScrollableDimension);
     _percentScrolledIntoFirstVisiblePage = ((offset
         - (_firstVisiblePageIndexBeforeRotation * pageScrollableDimension))
         / pageScrollableDimension);
@@ -701,14 +708,5 @@ const CGFloat NIPagingScrollViewDefaultPageMargin = 10;
 - (NSMutableSet *)visiblePages {
   return _visiblePages;
 }
-
-#pragma mark - Deprecated Methods
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-implementations"
-- (UIScrollView *)pagingScrollView {
-  return [self scrollView];
-}
-#pragma clang diagnostic pop
 
 @end

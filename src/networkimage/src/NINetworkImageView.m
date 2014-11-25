@@ -103,14 +103,18 @@
   // If the display size ever changes, we want to ensure that we're fetching the correct image
   // from the cache.
   if (self.sizeForDisplay) {
-    cacheKey = [cacheKey stringByAppendingFormat:@"%@%@{%d,%d}",
-                NSStringFromCGSize(imageSize), NSStringFromCGRect(cropRect), contentMode, scaleOptions];
+    cacheKey = [cacheKey stringByAppendingFormat:@"%@%@{%@,%@}",
+                NSStringFromCGSize(imageSize), NSStringFromCGRect(cropRect), [@(contentMode) stringValue], [@(scaleOptions) stringValue]];
   }
 
   // The resulting cache key will look like:
   // /path/to/image({width,height}{contentMode,cropImageForDisplay})
 
   return cacheKey;
+}
+
+- (NSDate *)expirationDate {
+  return (self.maxAge != 0) ? [NSDate dateWithTimeIntervalSinceNow:self.maxAge] : nil;
 }
 
 #pragma mark - Internal consistent implementation of state changes
@@ -189,7 +193,7 @@
                           cropRect:operation.imageCropRect
                        contentMode:operation.imageContentMode
                       scaleOptions:operation.scaleOptions
-                    expirationDate:nil];
+                    expirationDate:[self expirationDate]];
 }
 
 - (void)nimbusOperationDidFail:(NIOperation *)operation withError:(NSError *)error {
@@ -332,21 +336,21 @@
       requestOperation.userInfo = @{@"cacheKey":originalCacheKey};
 
       [requestOperation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSString* cacheKey = [self cacheKeyForCacheIdentifier:pathToNetworkImage
-                                                    imageSize:displaySize
-                                                     cropRect:cropRect
-                                                  contentMode:contentMode
-                                                 scaleOptions:self.scaleOptions];
+        NSString* blockCacheKey = [self cacheKeyForCacheIdentifier:pathToNetworkImage
+                                                         imageSize:displaySize
+                                                          cropRect:cropRect
+                                                       contentMode:contentMode
+                                                      scaleOptions:self.scaleOptions];
 
         // Only keep this result if it's for the most recent request.
-        if ([cacheKey isEqualToString:operation.userInfo[@"cacheKey"]]) {
+        if ([blockCacheKey isEqualToString:operation.userInfo[@"cacheKey"]]) {
           [self _didFinishLoadingWithImage:responseObject
                            cacheIdentifier:pathToNetworkImage
                                displaySize:displaySize
                                   cropRect:cropRect
                                contentMode:contentMode
                               scaleOptions:self.scaleOptions
-                            expirationDate:nil];
+                            expirationDate:[self expirationDate]];
         }
 
       } failure:^(AFHTTPRequestOperation *operation, NSError *error) {

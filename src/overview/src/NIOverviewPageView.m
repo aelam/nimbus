@@ -81,7 +81,7 @@ static const CGFloat kGraphRightMargin = 5;
 
   [_titleLabel sizeToFit];
   CGRect frame = _titleLabel.frame;
-  frame.origin.x = floorf((self.bounds.size.width - frame.size.width) / 2);
+  frame.origin.x = NICGFloatFloor((self.bounds.size.width - frame.size.width) / 2);
   frame.origin.y = self.bounds.size.height - frame.size.height;
   _titleLabel.frame = frame;
 }
@@ -566,8 +566,8 @@ static const CGFloat kGraphRightMargin = 5;
                                          _errorLogLevelLabel.frame.size.height);
 
   [_warningLogLevelLabel sizeToFit];
-  _warningLogLevelLabel.frame = CGRectMake(floorf((self.bounds.size.width
-                                                   - _warningLogLevelLabel.frame.size.width) / 2),
+  _warningLogLevelLabel.frame = CGRectMake(NICGFloatFloor((self.bounds.size.width
+                                                           - _warningLogLevelLabel.frame.size.width) / 2),
                                            sliderBottom,
                                            _warningLogLevelLabel.frame.size.width,
                                            _warningLogLevelLabel.frame.size.height);
@@ -655,13 +655,13 @@ static const CGFloat kGraphRightMargin = 5;
                         NIStringFromBytes(imageCache.maxNumberOfPixels)];
 
     NIOverviewImageMemoryCacheEntry* imageEntry = [[NIOverviewImageMemoryCacheEntry alloc] init];
-    imageEntry.numberOfPixels = imageCache.numberOfPixels;
-    imageEntry.maxNumberOfPixels = imageCache.maxNumberOfPixels;
-    imageEntry.maxNumberOfPixelsUnderStress = imageCache.maxNumberOfPixelsUnderStress;
+    imageEntry.numberOfPixels = (NSUInteger)imageCache.numberOfPixels;
+    imageEntry.maxNumberOfPixels = (NSUInteger)imageCache.maxNumberOfPixels;
+    imageEntry.maxNumberOfPixelsUnderStress = (NSUInteger)imageCache.maxNumberOfPixelsUnderStress;
     entry = imageEntry;
 
   } else {
-    self.label1.text = [NSString stringWithFormat:@"%d objects", self.cache.count];
+    self.label1.text = [NSString stringWithFormat:@"%zd objects", self.cache.count];
     self.label2.text = nil;
 
     entry = [[NIOverviewMemoryCacheEntry alloc] init];
